@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.Value;
 import org.springdoc.core.converters.PageableAsQueryParam;
 import org.springframework.data.domain.Pageable;
@@ -49,7 +50,7 @@ class ClientProfileController {
     @Operation(description = "Returns a specific client provided a client id had been passed")
     @GetMapping(value = "/clients/{client-id}")
     public ClientResource getExistingClient(
-            @Parameter(description = "Identifier of an existing client")
+            @Parameter(description = "Identifier of an existing client", required = true)
             @PathVariable("client-id") Long id
     ) {
         return clientService.findClient(id)
@@ -60,7 +61,7 @@ class ClientProfileController {
     @Operation(description = "Creates a new client")
     @PostMapping(value = "/clients/", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ClientResource createNewClient(
-            @Parameter(description = "Client to create")
+            @Parameter(description = "Client to create", required = true)
             @Validated @RequestBody NewClientRequest request
     ) {
         return new ClientResource(
@@ -71,13 +72,10 @@ class ClientProfileController {
     @Operation(description = "Updates an existing client")
     @PutMapping(value = "/clients/{client-id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ClientResource updateClient(
-            @Parameter(description = "Identifier of an existing client")
+            @Parameter(description = "Identifier of an existing client", required = true)
             @PathVariable("client-id")
                     Long id,
-            @Parameter(
-                    description = "A set of attributes used for update operation",
-                    schema = @Schema(implementation = UpdateClientRequest.class)
-            )
+            @Parameter(description = "A set of attributes used for update operation", required = true)
             @Validated
             @RequestBody
                     UpdateClientRequest request
@@ -89,7 +87,7 @@ class ClientProfileController {
     @DeleteMapping(value = "/clients/{client-id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteClient(
-            @Parameter(description = "Identifier of an existing client")
+            @Parameter(description = "Identifier of an existing client", required = true)
             @PathVariable("client-id") Long id
     ) {
         clientService.deleteExistingClient(id);
@@ -98,11 +96,7 @@ class ClientProfileController {
     @Operation(description = "Merges existing clients and returns a new client with the highest risk profile")
     @PostMapping(value = "/clients/merging", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ClientResource mergeClients(
-            @Parameter(
-                    description = "A set of client profile identifies to be merged",
-                    required = true,
-                    schema = @Schema(implementation = MergeClientsRequest.class)
-            )
+            @Parameter(description = "A set of client profile identifies to be merged", required = true)
             @Validated
             @RequestBody
                     MergeClientsRequest request
@@ -112,7 +106,9 @@ class ClientProfileController {
 
 }
 
+@Schema(description = "A request to create a new customer")
 @Value
+@Getter(onMethod_ = @JsonProperty)
 class NewClientRequest {
     @Schema(
             description = "Risk profile of the client",
@@ -127,7 +123,9 @@ class NewClientRequest {
     }
 }
 
+@Schema(description = "A request to update an existing customer")
 @Value
+@Getter(onMethod_ = @JsonProperty)
 class UpdateClientRequest {
     @Schema(
             description = "Risk profile of the client",
@@ -135,6 +133,7 @@ class UpdateClientRequest {
             implementation = RiskProfile.class
     )
     @NotNull
+    @JsonProperty
     private final String riskProfile;
 
     public Client toClient(Long id) {
@@ -142,7 +141,9 @@ class UpdateClientRequest {
     }
 }
 
+@Schema(description = "A request to merge existing clients")
 @Value
+@Getter(onMethod_ = @JsonProperty)
 class MergeClientsRequest {
     @Schema(
             description = "Set of client identifies to be merged",
@@ -153,7 +154,9 @@ class MergeClientsRequest {
     private final Set<Long> ids;
 }
 
+@Schema(description = "Client profile")
 @Value
+@Getter(onMethod_ = @JsonProperty)
 class ClientResource {
 
     @Schema(
@@ -168,7 +171,6 @@ class ClientResource {
             example = "LOW",
             implementation = RiskProfile.class
     )
-    @JsonProperty
     private final String riskProfile;
 
     public ClientResource(Client client) {
